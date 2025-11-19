@@ -1,0 +1,269 @@
+import React, { useRef, useState } from 'react';
+import { useStore } from '../store/useStore';
+import { cn } from '../lib/utils';
+import { FinancialCard } from './FinancialCard';
+import { TransactionNode } from './widgets/TransactionNode';
+import { KYCBadge } from './widgets/KYCBadge';
+import { APIEndpoint } from './widgets/APIEndpoint';
+import { PaymentProvider } from './widgets/PaymentProvider';
+import { CardGateway } from './widgets/CardGateway';
+import { DigitalWallet } from './widgets/DigitalWallet';
+import { CardIssuance } from './widgets/CardIssuance';
+import { StickyNote } from './widgets/StickyNote';
+import { ResizeHandles } from './ResizeHandles';
+
+export const Canvas: React.FC = () => {
+    const canvasRef = useRef<HTMLDivElement>(null);
+    const {
+        elements,
+        scale,
+        offset,
+        setOffset,
+        setScale,
+        tool,
+        addElement,
+        selectElement,
+        selectedIds,
+        removeElement
+    } = useStore();
+
+    const [isPanning, setIsPanning] = useState(false);
+    const [isDraggingElement, setIsDraggingElement] = useState<string | null>(null);
+    const [isResizing, setIsResizing] = useState<{ id: string; handle: string; startX: number; startY: number; startWidth: number; startHeight: number; startLeft: number; startTop: number } | null>(null);
+    const [isEditing, setIsEditing] = useState<string | null>(null);
+    const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
+
+    const handleWheel = (e: React.WheelEvent) => {
+        if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            const zoomSensitivity = 0.001;
+            const newScale = Math.min(Math.max(scale - e.deltaY * zoomSensitivity, 0.1), 5);
+            setScale(newScale);
+        } else {
+            setOffset({ x: offset.x - e.deltaX, y: offset.y - e.deltaY });
+        }
+    };
+
+    React.useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ignore if typing in an input or textarea
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+                return;
+            }
+
+            if ((e.key === 'Delete' || e.key === 'Backspace') && !isEditing && selectedIds.length > 0) {
+                selectedIds.forEach(id => removeElement(id));
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [selectedIds, isEditing, removeElement]);
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if (e.button === 1 || tool === 'pan') {
+            setIsPanning(true);
+            setLastMousePos({ x: e.clientX, y: e.clientY });
+        } else if (tool !== 'select') {
+            const rect = canvasRef.current?.getBoundingClientRect();
+            if (!rect) return;
+            const x = (e.clientX - rect.left - offset.x) / scale;
+            const y = (e.clientY - rect.top - offset.y) / scale;
+
+            let width = 100;
+            let height = 100;
+            let data = {};
+
+            if (tool === 'financial-card') { width = 240; height = 160; }
+            else if (tool === 'transaction-node') { width = 200; height = 80; }
+            else if (tool === 'kyc-badge') { width = 140; height = 32; }
+            else if (tool === 'api-endpoint') { width = 220; height = 40; }
+            else if (tool === 'payment-provider') { width = 200; height = 120; }
+            else if (tool === 'card-gateway') { width = 240; height = 140; }
+            else if (tool === 'digital-wallet') { width = 220; height = 140; }
+            else if (tool === 'card-issuance') { width = 240; height = 150; }
+            else if (tool === 'sticky-note') { width = 180; height = 180; }
+
+            addElement({
+                id: crypto.randomUUID(),
+                type: tool,
+                x,
+                y,
+                width,
+                height,
+                style: (tool === 'rectangle' || tool === 'circle') ? { backgroundColor: '#1e293b', borderColor: '#64ffda', borderWidth: 2 } : {},
+                data
+            });
+            // Reset tool to select after adding (optional, but good UX)
+            useStore.getState().setTool('select');
+        }
+    };
+
+    const handleElementMouseDown = (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        if (tool === 'select') {
+            selectElement(id);
+            setIsDraggingElement(id);
+            setLastMousePos({ x: e.clientX, y: e.clientY });
+        }
+    };
+
+    const handleResizeStart = (e: React.MouseEvent, id: string, handle: string, el: any) => {
+        e.stopPropagation();
+        setIsResizing({
+            id,
+            handle,
+            startX: e.clientX,
+            startY: e.clientY,
+            startWidth: el.width,
+            startHeight: el.height,
+            startLeft: el.x,
+            startTop: el.y
+        });
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (isPanning) {
+            const dx = e.clientX - lastMousePos.x;
+            const dy = e.clientY - lastMousePos.y;
+            setOffset({ x: offset.x + dx, y: offset.y + dy });
+            setLastMousePos({ x: e.clientX, y: e.clientY });
+        } else if (isResizing) {
+            const dx = (e.clientX - isResizing.startX) / scale;
+            const dy = (e.clientY - isResizing.startY) / scale;
+
+            let newWidth = isResizing.startWidth;
+            let newHeight = isResizing.startHeight;
+            let newX = isResizing.startLeft;
+            let newY = isResizing.startTop;
+
+            if (isResizing.handle.includes('e')) newWidth += dx;
+            if (isResizing.handle.includes('w')) { newWidth -= dx; newX += dx; }
+            if (isResizing.handle.includes('s')) newHeight += dy;
+            if (isResizing.handle.includes('n')) { newHeight -= dy; newY += dy; }
+
+            // Minimum size constraints
+            if (newWidth < 20) newWidth = 20;
+            if (newHeight < 20) newHeight = 20;
+
+            useStore.getState().updateElement(isResizing.id, {
+                width: newWidth,
+                height: newHeight,
+                x: newX,
+                y: newY
+            });
+
+        } else if (isDraggingElement) {
+            const dx = (e.clientX - lastMousePos.x) / scale;
+            const dy = (e.clientY - lastMousePos.y) / scale;
+
+            const el = elements.find(e => e.id === isDraggingElement);
+            if (el) {
+                useStore.getState().updateElement(isDraggingElement, { x: el.x + dx, y: el.y + dy });
+            }
+            setLastMousePos({ x: e.clientX, y: e.clientY });
+        }
+    };
+
+    const handleMouseUp = () => {
+        setIsPanning(false);
+        setIsDraggingElement(null);
+        setIsResizing(null);
+    };
+
+    return (
+        <div
+            ref={canvasRef}
+            className={cn(
+                "w-full h-screen overflow-hidden bg-background relative",
+                tool === 'pan' || isPanning ? "cursor-grab active:cursor-grabbing" : "cursor-default"
+            )}
+            onWheel={handleWheel}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+        >
+            <div
+                className="absolute origin-top-left transition-transform duration-75 ease-out"
+                style={{
+                    transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
+                }}
+            >
+                {elements.map((el) => (
+                    <div
+                        key={el.id}
+                        onMouseDown={(e) => handleElementMouseDown(e, el.id)}
+                        style={{
+                            position: 'absolute',
+                            left: el.x,
+                            top: el.y,
+                            width: el.width,
+                            height: el.height,
+                            ...el.style
+                        }}
+                        className={cn(
+                            "flex items-center justify-center text-white select-none",
+                            selectedIds.includes(el.id) && !['financial-card', 'transaction-node', 'kyc-badge', 'api-endpoint', 'payment-provider', 'card-gateway', 'digital-wallet', 'card-issuance', 'sticky-note'].includes(el.type) && "ring-2 ring-accent",
+                            el.type === 'circle' && "rounded-full"
+                        )}
+                    >
+                        {el.type === 'rectangle' && <div className="w-full h-full opacity-50" style={{ backgroundColor: el.style?.backgroundColor }} />}
+                        {el.type === 'financial-card' && <FinancialCard width={el.width} height={el.height} selected={selectedIds.includes(el.id)} data={el.data as any} />}
+                        {el.type === 'transaction-node' && <TransactionNode width={el.width} height={el.height} selected={selectedIds.includes(el.id)} data={el.data as any} />}
+                        {el.type === 'kyc-badge' && <KYCBadge width={el.width} height={el.height} selected={selectedIds.includes(el.id)} data={el.data as any} />}
+                        {el.type === 'api-endpoint' && <APIEndpoint width={el.width} height={el.height} selected={selectedIds.includes(el.id)} data={el.data as any} />}
+                        {el.type === 'payment-provider' && <PaymentProvider width={el.width} height={el.height} selected={selectedIds.includes(el.id)} data={el.data as any} />}
+                        {el.type === 'card-gateway' && <CardGateway width={el.width} height={el.height} selected={selectedIds.includes(el.id)} data={el.data as any} />}
+                        {el.type === 'digital-wallet' && <DigitalWallet width={el.width} height={el.height} selected={selectedIds.includes(el.id)} data={el.data as any} />}
+                        {el.type === 'card-issuance' && <CardIssuance width={el.width} height={el.height} selected={selectedIds.includes(el.id)} data={el.data as any} />}
+                        {el.type === 'sticky-note' && <StickyNote width={el.width} height={el.height} selected={selectedIds.includes(el.id)} data={el.data as any} />}
+                        {el.type === 'text' && (
+                            isEditing === el.id ? (
+                                <textarea
+                                    autoFocus
+                                    className="z-20 bg-transparent text-center resize-none outline-none w-full h-full overflow-hidden"
+                                    value={el.content || ''}
+                                    onChange={(e) => useStore.getState().updateElement(el.id, { content: e.target.value })}
+                                    onBlur={() => setIsEditing(null)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); setIsEditing(null); } }}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                />
+                            ) : (
+                                <span
+                                    className="z-10 whitespace-pre-wrap text-center w-full h-full flex items-center justify-center"
+                                    onDoubleClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsEditing(el.id);
+                                    }}
+                                >
+                                    {el.content || 'Double click to edit'}
+                                </span>
+                            )
+                        )}
+
+                        {selectedIds.includes(el.id) && (
+                            <ResizeHandles
+                                width={el.width}
+                                height={el.height}
+                                onResizeStart={(e, handle) => handleResizeStart(e, el.id, handle, el)}
+                            />
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {/* Grid Background */}
+            <div
+                className="absolute inset-0 pointer-events-none opacity-10"
+                style={{
+                    backgroundImage: `radial-gradient(#8892b0 1px, transparent 1px)`,
+                    backgroundSize: `${20 * scale}px ${20 * scale}px`,
+                    backgroundPosition: `${offset.x}px ${offset.y}px`
+                }}
+            />
+
+
+        </div>
+    );
+};
