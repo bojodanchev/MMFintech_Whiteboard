@@ -1,4 +1,4 @@
-export type ElementType = 'rectangle' | 'circle' | 'text' | 'financial-card' | 'transaction-node' | 'kyc-badge' | 'api-endpoint' | 'payment-provider' | 'card-gateway' | 'digital-wallet' | 'card-issuance' | 'sticky-note';
+export type ElementType = 'rectangle' | 'circle' | 'text' | 'financial-card' | 'transaction-node' | 'kyc-badge' | 'api-endpoint' | 'payment-provider' | 'card-gateway' | 'digital-wallet' | 'card-issuance' | 'sticky-note' | 'database-table' | 'payment-flow' | 'incident-timeline' | 'status-tracker' | 'connector';
 
 export interface CanvasElement {
     id: string;
@@ -31,8 +31,27 @@ export interface CanvasElement {
         type?: 'virtual' | 'physical';
         bin?: string;
         network?: 'Visa' | 'Mastercard';
-        color?: 'yellow' | 'blue' | 'green' | 'pink';
+        color?: 'yellow' | 'blue' | 'green' | 'pink' | 'purple' | 'orange';
         text?: string;
+        // Sticky note voting
+        votes?: number;
+        priority?: 'high' | 'medium' | 'low';
+        // Database table
+        tableName?: string;
+        columns?: Array<{ name: string; type: string; isPrimary?: boolean; isForeign?: boolean }>;
+        // Incident timeline
+        events?: Array<{ timestamp: string; message: string; severity: 'critical' | 'warning' | 'info' | 'resolved' }>;
+        // Status tracker
+        serviceName?: string;
+        uptime?: string;
+        responseTime?: string;
+        errorRate?: string;
+        // Connector properties
+        sourceId?: string;
+        targetId?: string;
+        lineStyle?: 'straight' | 'curved' | 'orthogonal';
+        arrowStart?: boolean;
+        arrowEnd?: boolean;
     };
 }
 
@@ -43,13 +62,60 @@ export interface AIConfig {
     model?: string;
 }
 
+export interface Connector {
+    id: string;
+    sourceId: string;
+    targetId: string;
+    sourcePoint?: { x: number; y: number };
+    targetPoint?: { x: number; y: number };
+    style?: {
+        lineStyle?: 'straight' | 'curved' | 'orthogonal';
+        color?: string;
+        width?: number;
+        arrowStart?: boolean;
+        arrowEnd?: boolean;
+    };
+}
+
+export interface Comment {
+    id: string;
+    elementId: string;
+    text: string;
+    author: string;
+    timestamp: string;
+    resolved: boolean;
+    replies?: Comment[];
+}
+
+export interface Version {
+    id: string;
+    timestamp: string;
+    elements: CanvasElement[];
+    connectors: Connector[];
+    thumbnail?: string;
+}
+
+export interface Activity {
+    id: string;
+    type: 'create' | 'update' | 'delete' | 'comment';
+    elementId?: string;
+    user: string;
+    timestamp: string;
+    description: string;
+}
+
 export interface CanvasState {
     elements: CanvasElement[];
+    connectors: Connector[];
+    comments: Comment[];
+    versions: Version[];
+    activities: Activity[];
     selectedIds: string[];
     scale: number;
     offset: { x: number; y: number };
-    tool: 'select' | 'pan' | 'rectangle' | 'circle' | 'text' | 'financial-card' | 'transaction-node' | 'kyc-badge' | 'api-endpoint' | 'payment-provider' | 'card-gateway' | 'digital-wallet' | 'card-issuance' | 'sticky-note';
+    tool: 'select' | 'pan' | 'rectangle' | 'circle' | 'text' | 'financial-card' | 'transaction-node' | 'kyc-badge' | 'api-endpoint' | 'payment-provider' | 'card-gateway' | 'digital-wallet' | 'card-issuance' | 'sticky-note' | 'database-table' | 'payment-flow' | 'incident-timeline' | 'status-tracker' | 'connector';
     aiConfig: AIConfig;
+    currentUser: string;
 
     addElement: (element: CanvasElement) => void;
     updateElement: (id: string, updates: Partial<CanvasElement>) => void;
@@ -59,4 +125,21 @@ export interface CanvasState {
     setOffset: (offset: { x: number; y: number }) => void;
     setScale: (scale: number) => void;
     setAIConfig: (config: Partial<AIConfig>) => void;
+
+    // Connector actions
+    addConnector: (connector: Connector) => void;
+    updateConnector: (id: string, updates: Partial<Connector>) => void;
+    removeConnector: (id: string) => void;
+
+    // Comment actions
+    addComment: (comment: Comment) => void;
+    updateComment: (id: string, updates: Partial<Comment>) => void;
+    removeComment: (id: string) => void;
+
+    // Version actions
+    createSnapshot: () => void;
+    restoreVersion: (versionId: string) => void;
+
+    // Activity actions
+    logActivity: (activity: Omit<Activity, 'id' | 'timestamp' | 'user'>) => void;
 }

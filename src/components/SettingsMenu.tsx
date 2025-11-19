@@ -2,11 +2,31 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Settings, Info, HelpCircle, Moon, Download, LogOut, Bot } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { AISettingsDialog } from './AISettingsDialog';
+import { useStore } from '../store/useStore';
 
 export const SettingsMenu: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [showAISettings, setShowAISettings] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+    const { elements, connectors } = useStore();
+
+    const handleExport = () => {
+        const data = {
+            elements,
+            connectors,
+            version: '1.0.0',
+            timestamp: new Date().toISOString()
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `whiteboard-${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -24,7 +44,7 @@ export const SettingsMenu: React.FC = () => {
     const menuItems = [
         { icon: Moon, label: 'Dark Mode', action: () => console.log('Toggle Theme'), shortcut: '⌘D' },
         { icon: Bot, label: 'AI Configuration', action: () => setShowAISettings(true) },
-        { icon: Download, label: 'Export Canvas', action: () => console.log('Export'), shortcut: '⌘E' },
+        { icon: Download, label: 'Export Canvas (JSON)', action: handleExport, shortcut: '⌘E' },
         { type: 'separator' },
         { icon: Info, label: 'About MM Fintech', action: () => console.log('About') },
         { icon: HelpCircle, label: 'Help & Shortcuts', action: () => console.log('Help') },

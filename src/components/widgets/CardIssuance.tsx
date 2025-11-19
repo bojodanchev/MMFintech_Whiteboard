@@ -1,5 +1,5 @@
 import React from 'react';
-import { CreditCard, Cpu, Wifi } from 'lucide-react';
+import { Cpu, Wifi } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface CardIssuanceProps {

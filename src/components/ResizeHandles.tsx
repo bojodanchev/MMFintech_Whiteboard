@@ -7,7 +7,7 @@ interface ResizeHandlesProps {
     onResizeStart: (e: React.MouseEvent, handle: string) => void;
 }
 
-export const ResizeHandles: React.FC<ResizeHandlesProps> = ({ width, height, onResizeStart }) => {
+export const ResizeHandles: React.FC<ResizeHandlesProps> = ({ onResizeStart }) => {
     const handles = [
         { id: 'nw', cursor: 'nw-resize', style: { top: -4, left: -4 } },
         { id: 'ne', cursor: 'ne-resize', style: { top: -4, right: -4 } },

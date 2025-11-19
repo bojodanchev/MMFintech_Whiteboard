@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStore } from '../store/useStore';
-import { MousePointer2, Hand, Square, Circle, Type, TrendingUp, Activity, ArrowRightLeft, ShieldCheck, Globe, CreditCard, Server, Wallet, StickyNote } from 'lucide-react';
+import { MousePointer2, Hand, Square, Circle, Type, Activity, ArrowRightLeft, ShieldCheck, Globe, CreditCard, Server, Wallet, StickyNote, Database, AlertOctagon, BarChart3, GitMerge, Cable } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export const Toolbar: React.FC = () => {
@@ -12,6 +12,7 @@ export const Toolbar: React.FC = () => {
             tools: [
                 { id: 'select', icon: MousePointer2, label: 'Select (V)' },
                 { id: 'pan', icon: Hand, label: 'Pan (H)' },
+                { id: 'connector', icon: Cable, label: 'Connect (C)' },
             ]
         },
         {
@@ -39,6 +40,15 @@ export const Toolbar: React.FC = () => {
             label: 'Collaboration',
             tools: [
                 { id: 'sticky-note', icon: StickyNote, label: 'Note (N)' },
+            ]
+        },
+        {
+            label: 'System & Ops',
+            tools: [
+                { id: 'database-table', icon: Database, label: 'Database' },
+                { id: 'payment-flow', icon: GitMerge, label: 'Flow' },
+                { id: 'incident-timeline', icon: AlertOctagon, label: 'Timeline' },
+                { id: 'status-tracker', icon: BarChart3, label: 'Status' },
             ]
         }
     ];

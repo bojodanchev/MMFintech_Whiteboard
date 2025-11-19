@@ -1,5 +1,5 @@
 import React from 'react';
-import { Server, Globe } from 'lucide-react';
+import { Globe } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface APIEndpointProps {
