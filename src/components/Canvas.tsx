@@ -144,8 +144,9 @@ export const Canvas: React.FC = () => {
     };
 
     const handleElementMouseUp = (e: React.MouseEvent, id: string) => {
-        e.stopPropagation();
+        // Only stop propagation if we actually performed an action that should consume the event
         if (tool === 'connector' && connectingStartId && connectingStartId !== id) {
+            e.stopPropagation();
             addConnector({
                 id: crypto.randomUUID(),
                 sourceId: connectingStartId,
@@ -207,7 +208,7 @@ export const Canvas: React.FC = () => {
                 height: newHeight,
                 x: newX,
                 y: newY
-            });
+            }, true);
 
         } else if (isDraggingElement) {
             const dx = (e.clientX - lastMousePos.x) / scale;
@@ -215,7 +216,7 @@ export const Canvas: React.FC = () => {
 
             const el = elements.find(e => e.id === isDraggingElement);
             if (el) {
-                useStore.getState().updateElement(isDraggingElement, { x: el.x + dx, y: el.y + dy });
+                useStore.getState().updateElement(isDraggingElement, { x: el.x + dx, y: el.y + dy }, true);
             }
             setLastMousePos({ x: e.clientX, y: e.clientY });
         }

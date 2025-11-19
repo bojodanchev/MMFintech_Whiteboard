@@ -118,7 +118,7 @@ export interface CanvasState {
     currentUser: string;
 
     addElement: (element: CanvasElement) => void;
-    updateElement: (id: string, updates: Partial<CanvasElement>) => void;
+    updateElement: (id: string, updates: Partial<CanvasElement>, skipLog?: boolean) => void;
     removeElement: (id: string) => void;
     selectElement: (id: string) => void;
     setTool: (tool: CanvasState['tool']) => void;
