@@ -1,54 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Settings, Info, HelpCircle, Moon, Download, LogOut, Bot, Image as ImageIcon } from 'lucide-react';
-import html2canvas from 'html2canvas';
 import { cn } from '../lib/utils';
 import { AISettingsDialog } from './AISettingsDialog';
+import { exportToPNG, exportToJSON } from '../utils/exportUtils';
 import { useStore } from '../store/useStore';
 
 export const SettingsMenu: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [showAISettings, setShowAISettings] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
-    const { elements, connectors } = useStore();
+    const { elements, connectors, scale, offset, currentUser } = useStore();
 
     const handleExport = () => {
-        const data = {
-            elements,
-            connectors,
-            version: '1.0.0',
-            timestamp: new Date().toISOString()
-        };
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `whiteboard-${new Date().toISOString().slice(0, 10)}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        exportToJSON(elements, connectors, scale, offset, currentUser);
     };
 
     const handleExportPNG = async () => {
-        const element = document.getElementById('whiteboard-canvas');
-        if (!element) return;
-
         try {
-            const canvas = await html2canvas(element, {
-                useCORS: true,
-                backgroundColor: '#0f172a', // Match background color
-                scale: 2, // Higher quality
-            });
-
-            const url = canvas.toDataURL('image/png');
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `whiteboard-${new Date().toISOString().slice(0, 10)}.png`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            await exportToPNG(elements, connectors, scale, offset);
         } catch (error) {
-            console.error('Export failed:', error);
+            console.error('PNG export failed:', error);
+            alert('Failed to export PNG. Please try again.');
         }
     };
 
@@ -124,7 +96,7 @@ export const SettingsMenu: React.FC = () => {
                         ))}
                         <div className="px-3 py-2 border-t border-border mt-1 bg-muted/30">
                             <p className="text-[10px] text-center text-muted-foreground">
-                                v1.0.4 • MM Fintech
+                                v1.0.5 • MM Fintech
                             </p>
                         </div>
                     </div>
