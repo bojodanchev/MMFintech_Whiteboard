@@ -243,6 +243,7 @@ export const Canvas: React.FC = () => {
     return (
         <div
             ref={canvasRef}
+            id="whiteboard-canvas"
             className={cn(
                 "w-full h-screen overflow-hidden bg-background relative",
                 tool === 'pan' || isPanning ? "cursor-grab active:cursor-grabbing" : "cursor-default",

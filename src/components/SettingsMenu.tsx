@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Settings, Info, HelpCircle, Moon, Download, LogOut, Bot } from 'lucide-react';
+import { Settings, Info, HelpCircle, Moon, Download, LogOut, Bot, Image as ImageIcon } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import { cn } from '../lib/utils';
 import { AISettingsDialog } from './AISettingsDialog';
 import { useStore } from '../store/useStore';
@@ -21,11 +22,34 @@ export const SettingsMenu: React.FC = () => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `whiteboard-${new Date().toISOString().slice(0,10)}.json`;
+        a.download = `whiteboard-${new Date().toISOString().slice(0, 10)}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+    };
+
+    const handleExportPNG = async () => {
+        const element = document.getElementById('whiteboard-canvas');
+        if (!element) return;
+
+        try {
+            const canvas = await html2canvas(element, {
+                useCORS: true,
+                backgroundColor: '#0f172a', // Match background color
+                scale: 2, // Higher quality
+            });
+
+            const url = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `whiteboard-${new Date().toISOString().slice(0, 10)}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error('Export failed:', error);
+        }
     };
 
     useEffect(() => {
@@ -45,6 +69,7 @@ export const SettingsMenu: React.FC = () => {
         { icon: Moon, label: 'Dark Mode', action: () => console.log('Toggle Theme'), shortcut: '⌘D' },
         { icon: Bot, label: 'AI Configuration', action: () => setShowAISettings(true) },
         { icon: Download, label: 'Export Canvas (JSON)', action: handleExport, shortcut: '⌘E' },
+        { icon: ImageIcon, label: 'Export Canvas (PNG)', action: handleExportPNG, shortcut: '⌘P' },
         { type: 'separator' },
         { icon: Info, label: 'About MM Fintech', action: () => console.log('About') },
         { icon: HelpCircle, label: 'Help & Shortcuts', action: () => console.log('Help') },
