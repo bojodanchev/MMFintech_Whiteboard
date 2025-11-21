@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { cn } from '../lib/utils';
+import { getDefaultElementData } from '../utils/elementDefaults';
 import { FinancialCard } from './FinancialCard';
 import { TransactionNode } from './widgets/TransactionNode';
 import { KYCBadge } from './widgets/KYCBadge';
@@ -126,7 +127,7 @@ export const Canvas: React.FC = () => {
             width: dims.width,
             height: dims.height,
             style: (tool === 'rectangle' || tool === 'circle') ? { backgroundColor: '#1e293b', borderColor: '#64ffda', borderWidth: 2 } : {},
-            data: {}
+            data: getDefaultElementData(tool)
         });
 
         useStore.getState().setTool('select');
