@@ -1,6 +1,8 @@
 import React from 'react';
 import { useStore } from '../store/useStore';
 import { X } from 'lucide-react';
+import { DatabaseColumnEditor } from './DatabaseColumnEditor';
+import { TimelineEventEditor } from './TimelineEventEditor';
 
 export const PropertyPanel: React.FC = () => {
     const { selectedIds, elements, updateElement, selectElement } = useStore();
@@ -25,8 +27,8 @@ export const PropertyPanel: React.FC = () => {
     };
 
     return (
-        <div className="fixed top-20 right-4 w-64 bg-card border border-border rounded-lg shadow-xl p-4 z-50">
-            <div className="flex justify-between items-center mb-4">
+        <div className="fixed top-20 right-4 w-80 bg-card border border-border rounded-lg shadow-xl p-4 z-50 max-h-[calc(100vh-6rem)] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4 sticky top-0 bg-card pb-2 border-b border-border">
                 <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Properties</h3>
                 <button onClick={() => selectElement('')} className="text-muted-foreground hover:text-foreground">
                     <X size={16} />
@@ -329,6 +331,93 @@ export const PropertyPanel: React.FC = () => {
                             />
                         </div>
                     </>
+                )}
+
+                {/* Database Table Specifics */}
+                {element.type === 'database-table' && (
+                    <>
+                        <div className="space-y-1">
+                            <label className="text-xs font-medium">Table Name</label>
+                            <input
+                                type="text"
+                                value={element.data?.tableName || 'table_name'}
+                                onChange={(e) => handleChange('data.tableName', e.target.value)}
+                                className="w-full bg-background border border-input rounded px-2 py-1 text-sm"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-medium">Columns</label>
+                            <DatabaseColumnEditor
+                                columns={element.data?.columns || []}
+                                onChange={(columns) => handleChange('data.columns', columns)}
+                            />
+                        </div>
+                    </>
+                )}
+
+                {/* Status Tracker Specifics */}
+                {element.type === 'status-tracker' && (
+                    <>
+                        <div className="space-y-1">
+                            <label className="text-xs font-medium">Service Name</label>
+                            <input
+                                type="text"
+                                value={element.data?.serviceName || 'Payment API'}
+                                onChange={(e) => handleChange('data.serviceName', e.target.value)}
+                                className="w-full bg-background border border-input rounded px-2 py-1 text-sm"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-medium">Status</label>
+                            <select
+                                value={element.data?.status || 'active'}
+                                onChange={(e) => handleChange('data.status', e.target.value)}
+                                className="w-full bg-background border border-input rounded px-2 py-1 text-sm"
+                            >
+                                <option value="active">Active</option>
+                                <option value="maintenance">Maintenance</option>
+                                <option value="down">Down</option>
+                            </select>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-medium">Uptime</label>
+                            <input
+                                type="text"
+                                value={element.data?.uptime || '99.9%'}
+                                onChange={(e) => handleChange('data.uptime', e.target.value)}
+                                className="w-full bg-background border border-input rounded px-2 py-1 text-sm"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-medium">Response Time</label>
+                            <input
+                                type="text"
+                                value={element.data?.responseTime || '45ms'}
+                                onChange={(e) => handleChange('data.responseTime', e.target.value)}
+                                className="w-full bg-background border border-input rounded px-2 py-1 text-sm"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-medium">Error Rate</label>
+                            <input
+                                type="text"
+                                value={element.data?.errorRate || '0.01%'}
+                                onChange={(e) => handleChange('data.errorRate', e.target.value)}
+                                className="w-full bg-background border border-input rounded px-2 py-1 text-sm"
+                            />
+                        </div>
+                    </>
+                )}
+
+                {/* Incident Timeline Specifics */}
+                {element.type === 'incident-timeline' && (
+                    <div className="space-y-1">
+                        <label className="text-xs font-medium">Events</label>
+                        <TimelineEventEditor
+                            events={element.data?.events || []}
+                            onChange={(events) => handleChange('data.events', events)}
+                        />
+                    </div>
                 )}
             </div>
         </div>

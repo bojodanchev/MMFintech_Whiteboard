@@ -39,7 +39,7 @@ export const Canvas: React.FC = () => {
     const [isResizing, setIsResizing] = useState<{ id: string; handle: string; startX: number; startY: number; startWidth: number; startHeight: number; startLeft: number; startTop: number } | null>(null);
     const [isEditing, setIsEditing] = useState<string | null>(null);
     const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
-    
+
     const [connectingStartId, setConnectingStartId] = useState<string | null>(null);
     const [currentMousePos, setCurrentMousePos] = useState({ x: 0, y: 0 });
 
@@ -82,7 +82,7 @@ export const Canvas: React.FC = () => {
             if ((e.key === 'Delete' || e.key === 'Backspace') && !isEditing && selectedIds.length > 0) {
                 selectedIds.forEach(id => removeElement(id));
             }
-            
+
             // Cancel connector on Esc
             if (e.key === 'Escape') {
                 setConnectingStartId(null);
@@ -109,12 +109,12 @@ export const Canvas: React.FC = () => {
 
         const rect = canvasRef.current?.getBoundingClientRect();
         if (!rect) return;
-        
+
         // Center the element on the mouse cursor
         const dims = getGhostDimensions(tool);
         const rawX = (e.clientX - rect.left - offset.x) / scale;
         const rawY = (e.clientY - rect.top - offset.y) / scale;
-        
+
         const x = rawX - dims.width / 2;
         const y = rawY - dims.height / 2;
 
@@ -128,7 +128,7 @@ export const Canvas: React.FC = () => {
             style: (tool === 'rectangle' || tool === 'circle') ? { backgroundColor: '#1e293b', borderColor: '#64ffda', borderWidth: 2 } : {},
             data: {}
         });
-        
+
         useStore.getState().setTool('select');
     };
 
@@ -256,12 +256,12 @@ export const Canvas: React.FC = () => {
         >
             {/* Placement Overlay Layer - Ensures clicks are captured for placement */}
             {isPlacementMode && (
-                <div 
+                <div
                     className="absolute inset-0 z-50 cursor-none"
                     onClick={handlePlacementClick}
                 >
-                     {/* Ghost Element Following Mouse */}
-                     <div
+                    {/* Ghost Element Following Mouse */}
+                    <div
                         style={{
                             position: 'absolute',
                             // We need to transform screen coords back to screen relative to this container
@@ -298,7 +298,7 @@ export const Canvas: React.FC = () => {
                         const p1 = getCenter(source);
                         const p2 = getCenter(target);
                         return (
-                            <line 
+                            <line
                                 key={c.id}
                                 x1={p1.x} y1={p1.y}
                                 x2={p2.x} y2={p2.y}
@@ -314,7 +314,7 @@ export const Canvas: React.FC = () => {
                             if (!source) return null;
                             const p1 = getCenter(source);
                             return (
-                                <line 
+                                <line
                                     x1={p1.x} y1={p1.y}
                                     x2={currentMousePos.x} y2={currentMousePos.y}
                                     stroke="#64748b"
@@ -392,6 +392,7 @@ export const Canvas: React.FC = () => {
                                     onBlur={() => setIsEditing(null)}
                                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); setIsEditing(null); } }}
                                     onMouseDown={(e) => e.stopPropagation()}
+                                    placeholder="Double click to edit"
                                 />
                             ) : (
                                 <span
